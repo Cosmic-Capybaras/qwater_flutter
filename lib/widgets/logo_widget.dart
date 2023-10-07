@@ -6,7 +6,7 @@ class LogoWidget extends StatelessWidget {
     return Container(
       padding: EdgeInsets.all(16.0),
       height: 200.0,
-      child: Image.asset('/logo.png'),
+      child: Image.asset('assets/logo.png'),
     );
   }
 }
