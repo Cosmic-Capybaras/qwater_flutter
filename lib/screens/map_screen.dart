@@ -1,11 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import '../shared_prefs_helper.dart';
 import '../widgets/navigation_bar_widget.dart';
 import 'dart:html';
 import 'package:google_maps/google_maps.dart';
 import 'dart:ui_web' as ui_web;
 import 'dart:convert';
 import 'package:http/http.dart' as http;
+
+import 'main_screen.dart';
 
 class MapScreen extends StatefulWidget {
   const MapScreen({super.key});
@@ -61,7 +64,7 @@ class _MapScreenState extends State<MapScreen> {
   String formatDateTime(String dateTimeStr) {
     var inputFormat = DateFormat("yyyy-MM-ddTHH:mm:ss'Z'");
     DateTime dateTime = inputFormat.parse(dateTimeStr);
-    var outputFormat = DateFormat.yMMMd().add_jm(); // For example: Oct 7, 2023 5:00 PM
+    var outputFormat = DateFormat.yMMMd().add_jm();
     return outputFormat.format(dateTime);
   }
 
@@ -75,25 +78,39 @@ class _MapScreenState extends State<MapScreen> {
         context: context,
         builder: (BuildContext context) {
           return AlertDialog(
-            title: Text(locationTitle ?? "Details"),  // Display the location title here
+            title: Text(locationTitle ?? "Details"),
             content: SingleChildScrollView(
               child: ListBody(
                 children: <Widget>[
-                  Text("Description: ${data['description']}"),
-                  // Text("Created at: ${data['created_at']}"),
-                  // Text("Date: ${data['test_date']}"),
-                  Text("Date: ${formatDateTime(data['test_date'])}"),
+                  if (data['description'] != null)
+                    Text("Description: ${data['description']}"),
+
+                  if (data['test_date'] != null)
+                    Text("Date: ${formatDateTime(data['test_date'])}"),
+
                   for (var item in data['data_values'])
-                    Text("${item['data_type_name']}: ${item['value'] ?? item['string_value']}"),
+                    if (item['data_type_name'] != null && (item['value'] != null || item['string_value'] != null))
+                      Text("${item['data_type_name']}: ${item['value'] ?? item['string_value']}"),
                 ],
               ),
             ),
             actions: <Widget>[
-              TextButton(
-                child: Text("Close"),
-                onPressed: () {
-                  Navigator.of(context).pop();
-                },
+              Row(
+                children: [
+                  TextButton(
+                    child: Text("Set as default"),
+                    onPressed: () async {
+                      await SharedPrefsHelper.setSelectedLocationId(id);
+                      Navigator.of(context).pushReplacement(MaterialPageRoute(builder: (context) => MainScreen()));
+                    },
+                  ),
+                  TextButton(
+                    child: Text("Close"),
+                    onPressed: () {
+                      Navigator.of(context).pop();
+                    },
+                  ),
+                ],
               ),
             ],
           );

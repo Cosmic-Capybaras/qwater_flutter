@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 
+import '../shared_prefs_helper.dart';
+
 class DataDisplayWidget extends StatefulWidget {
   @override
   _DataDisplayWidgetState createState() => _DataDisplayWidgetState();
@@ -9,15 +11,25 @@ class DataDisplayWidget extends StatefulWidget {
 
 class _DataDisplayWidgetState extends State<DataDisplayWidget> {
   Map<String, dynamic>? data;
+  int? _selectedLocationId;
 
   @override
   void initState() {
     super.initState();
     fetchData();
+    _loadSelectedLocation();
+  }
+
+  void _loadSelectedLocation() async {
+    final id = await SharedPrefsHelper.getSelectedLocationId();
+    setState(() {
+      _selectedLocationId = id;
+    });
+    fetchData();
   }
 
   fetchData() async {
-    var response = await http.get(Uri.parse('http://188.68.247.32:9000/api/latest-data/10'));
+    var response = await http.get(Uri.parse('http://188.68.247.32:9000/api/latest-data/${_selectedLocationId ?? 1}/'));
     if (response.statusCode == 200) {
       setState(() {
         data = json.decode(utf8.decode(response.bodyBytes));
@@ -60,7 +72,7 @@ class _DataDisplayWidgetState extends State<DataDisplayWidget> {
               ),
               SizedBox(height: 8.0),
               Text(
-                "${data!['description']}",
+                "${data!['description'] ?? 'No available data'}",
                 style: TextStyle(fontSize: 16.0, fontStyle: FontStyle.italic),
               ),
               Divider(height: 16.0, color: Colors.blue),
