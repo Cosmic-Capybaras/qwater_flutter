@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import '../widgets/logo_widget.dart';
-import '../widgets/location_name_widget.dart';
 import '../widgets/data_display_widget.dart';
 import '../widgets/chart_widget.dart';
 import '../widgets/navigation_bar_widget.dart';
@@ -10,16 +9,17 @@ class MainScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       body: SingleChildScrollView(
-        child: Column(
-          children: [
-            LogoWidget(),
-            LocationNameWidget(),
-            DataDisplayWidget(),
-            ChartWidget(),
-          ],
+        child: Center(
+          child: Column(
+            children: [
+              LogoWidget(),
+              DataDisplayWidget(),
+              ChartWidget(),
+            ],
+          ),
         ),
       ),
-      bottomNavigationBar: NavigationBarWidget(),
+      bottomNavigationBar: NavigationBarWidget(initialIndex: 0),
     );
   }
 }

@@ -7,7 +7,7 @@ class SettingsScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       body: Center(child: Text("Ustawienia")),
-      bottomNavigationBar: NavigationBarWidget(),
+      bottomNavigationBar: NavigationBarWidget(initialIndex: 2),
     );
   }
 }
