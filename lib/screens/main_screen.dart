@@ -1,3 +1,5 @@
+import 'dart:math';
+
 import 'package:flutter/material.dart';
 import '../widgets/logo_widget.dart';
 import '../widgets/data_display_widget.dart';
@@ -10,12 +12,18 @@ class MainScreen extends StatelessWidget {
     return Scaffold(
       body: SingleChildScrollView(
         child: Center(
-          child: Column(
-            children: [
-              LogoWidget(),
-              DataDisplayWidget(),
-              ChartWidget(),
-            ],
+          child: ConstrainedBox(
+            constraints: BoxConstraints(
+              minWidth: 500.0,
+              maxWidth: max(500.0, MediaQuery.of(context).size.width * 0.5),
+            ),
+            child: Column(
+              children: [
+                LogoWidget(),
+                DataDisplayWidget(),
+                ChartWidget(),
+              ],
+            ),
           ),
         ),
       ),
