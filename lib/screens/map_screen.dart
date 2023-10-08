@@ -1,9 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:pointer_interceptor/pointer_interceptor.dart';
 import '../shared_prefs_helper.dart';
 import '../widgets/navigation_bar_widget.dart';
 import 'dart:html';
-import 'package:google_maps/google_maps.dart';
+import 'package:google_maps/google_maps.dart' as gmaps;
 import 'dart:ui_web' as ui_web;
 import 'dart:convert';
 import 'package:http/http.dart' as http;
@@ -22,7 +23,8 @@ class _MapScreenState extends State<MapScreen> {
   late Future<List<dynamic>> _locationsFuture;
 
   Future<List<dynamic>> _fetchLocations() async {
-    final response = await http.get(Uri.parse('http://188.68.247.32:9000/api/locations/'));
+    final response =
+        await http.get(Uri.parse('http://188.68.247.32:9000/api/locations/'));
     if (response.statusCode == 200) {
       locations = json.decode(utf8.decode(response.bodyBytes));
       return locations;
@@ -57,7 +59,8 @@ class _MapScreenState extends State<MapScreen> {
   }
 
   String? getLocationTitleById(int id) {
-    var location = locations.firstWhere((loc) => loc['id'] == id, orElse: () => null);
+    var location =
+        locations.firstWhere((loc) => loc['id'] == id, orElse: () => null);
     return location?['title'];
   }
 
@@ -69,67 +72,126 @@ class _MapScreenState extends State<MapScreen> {
   }
 
   Future<void> _showDetails(int id) async {
-    final response = await http.get(Uri.parse('http://188.68.247.32:9000/api/latest-data/$id'));
+    final response = await http
+        .get(Uri.parse('http://188.68.247.32:9000/api/latest-data/$id'));
 
     if (response.statusCode == 200) {
       var data = json.decode(utf8.decode(response.bodyBytes));
       var locationTitle = data['location_title'];
-      showDialog(
-        context: context,
-        builder: (BuildContext context) {
-          return AlertDialog(
-            title: Text(locationTitle ?? "Details"),
-            content: SingleChildScrollView(
-              child: ListBody(
-                children: <Widget>[
-                  if (data['description'] != null)
-                    Text("Description: ${data['description']}"),
 
-                  if (data['test_date'] != null)
-                    Text("Date: ${formatDateTime(data['test_date'])}"),
-
-                  for (var item in data['data_values'])
-                    if (item['data_type_name'] != null && (item['value'] != null || item['string_value'] != null))
-                      Text("${item['data_type_name']}: ${item['value'] ?? item['string_value']}"),
+      if (mounted) {
+        showDialog(
+          context: context,
+          builder: (BuildContext context) {
+            return PointerInterceptor(
+              child: AlertDialog(
+                titlePadding: EdgeInsets.all(20.0),
+                contentPadding:
+                    EdgeInsets.symmetric(horizontal: 20.0, vertical: 10.0),
+                title: Text(
+                  locationTitle ?? "Details",
+                  style: TextStyle(
+                    fontWeight: FontWeight.bold,
+                    fontSize: 20.0,
+                  ),
+                ),
+                content: SingleChildScrollView(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: <Widget>[
+                      if (data['description'] != null)
+                        Padding(
+                          padding: const EdgeInsets.only(bottom: 10.0),
+                          child: Text(
+                            "Description:",
+                            style: TextStyle(fontWeight: FontWeight.bold),
+                          ),
+                        ),
+                      if (data['description'] != null)
+                        Padding(
+                          padding: const EdgeInsets.only(bottom: 10.0),
+                          child: Text("${data['description']}"),
+                        ),
+                      if (data['test_date'] != null)
+                        Padding(
+                          padding: const EdgeInsets.only(bottom: 10.0),
+                          child: Text(
+                            "Date:",
+                            style: TextStyle(fontWeight: FontWeight.bold),
+                          ),
+                        ),
+                      if (data['test_date'] != null)
+                        Padding(
+                          padding: const EdgeInsets.only(bottom: 10.0),
+                          child: Text("${formatDateTime(data['test_date'])}"),
+                        ),
+                      Divider(),
+                      for (var item in data['data_values'])
+                        if (item['data_type_name'] != null &&
+                            (item['value'] != null ||
+                                item['string_value'] != null))
+                          Padding(
+                            padding: const EdgeInsets.only(top: 10.0),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  "${item['data_type_name']}:",
+                                  style: TextStyle(fontWeight: FontWeight.bold),
+                                ),
+                                Text(
+                                    "${item['value'] ?? item['string_value']}"),
+                              ],
+                            ),
+                          ),
+                      if (data['data_values'].length == 0)
+                        Text("No available data"),
+                    ],
+                  ),
+                ),
+                actions: <Widget>[
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      TextButton(
+                        child: Text(
+                          "Set as default",
+                          style: TextStyle(fontWeight: FontWeight.bold),
+                        ),
+                        onPressed: () async {
+                          await SharedPrefsHelper.setSelectedLocationId(id);
+                          Navigator.of(context).pushReplacement(MaterialPageRoute(
+                              builder: (context) => MainScreen()));
+                        },
+                      ),
+                      TextButton(
+                        child: Text("Close"),
+                        onPressed: () async {
+                          await SharedPrefsHelper.setSelectedLocationId(id);
+                          Navigator.of(context).pop();
+                        },
+                      ),
+                    ],
+                  ),
                 ],
               ),
-            ),
-            actions: <Widget>[
-              Row(
-                children: [
-                  TextButton(
-                    child: Text("Set as default"),
-                    onPressed: () async {
-                      await SharedPrefsHelper.setSelectedLocationId(id);
-                      Navigator.of(context).pushReplacement(MaterialPageRoute(builder: (context) => MainScreen()));
-                    },
-                  ),
-                  TextButton(
-                    child: Text("Close"),
-                    onPressed: () {
-                      Navigator.of(context).pop();
-                    },
-                  ),
-                ],
-              ),
-            ],
-          );
-        },
-      );
+            );
+          },
+        );
+      }
     } else {
       // Handle the error accordingly
       print('Failed to load data for location $id');
     }
   }
 
-
   Widget getMap() {
-    String htmlId = "7";
+    String htmlId = DateTime.now().millisecondsSinceEpoch.toString();
 
     ui_web.platformViewRegistry.registerViewFactory(htmlId, (int viewId) {
-      final myLatlng = LatLng(52, 19.5);
+      final myLatlng = gmaps.LatLng(52, 19.5);
 
-      final mapOptions = MapOptions()
+      final mapOptions = gmaps.MapOptions()
         ..zoom = 6
         ..center = myLatlng
         ..streetViewControl = false
@@ -144,14 +206,14 @@ class _MapScreenState extends State<MapScreen> {
         ..style.height = "100%"
         ..style.border = 'none';
 
-      final map = GMap(elem, mapOptions);
+      final map = gmaps.GMap(elem, mapOptions);
       for (var location in locations) {
-        final latLng = LatLng(location['latitude'], location['longitude']);
-        final marker = Marker(MarkerOptions()
+        final latLng =
+            gmaps.LatLng(location['latitude'], location['longitude']);
+        final marker = gmaps.Marker(gmaps.MarkerOptions()
           ..position = latLng
           ..map = map
-          ..title = location['title']
-        );
+          ..title = location['title']);
 
         marker.onClick.listen((_) {
           _showDetails(location['id']);
@@ -162,5 +224,10 @@ class _MapScreenState extends State<MapScreen> {
     });
 
     return HtmlElementView(viewType: htmlId);
+  }
+
+  @override
+  void dispose() {
+    super.dispose();
   }
 }

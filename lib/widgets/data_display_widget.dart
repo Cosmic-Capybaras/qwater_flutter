@@ -16,7 +16,6 @@ class _DataDisplayWidgetState extends State<DataDisplayWidget> {
   @override
   void initState() {
     super.initState();
-    fetchData();
     _loadSelectedLocation();
   }
 
